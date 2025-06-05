@@ -82,7 +82,7 @@ export const ResumeBuilder: React.FC<ResumeBuilderProps> = ({
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-800 mb-4">Build Your Resume</h3>
+      <h3 className="text-lg font-semibold text-white mb-4">Build Your Resume</h3>
       
       {/* Section Navigation */}
       <div className="grid grid-cols-2 md:grid-cols-3 gap-2 mb-6">
@@ -94,8 +94,8 @@ export const ResumeBuilder: React.FC<ResumeBuilderProps> = ({
               onClick={() => onSectionChange(section.id)}
               className={`p-3 rounded-lg text-sm font-medium transition-all duration-200 flex items-center space-x-2 ${
                 activeSection === section.id
-                  ? 'bg-blue-100 text-blue-700 ring-2 ring-blue-200'
-                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100'
+                  ? 'bg-violet-500/30 text-violet-200 ring-2 ring-violet-400/50'
+                  : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
               }`}
             >
               <Icon className="h-4 w-4" />
@@ -106,7 +106,7 @@ export const ResumeBuilder: React.FC<ResumeBuilderProps> = ({
       </div>
 
       {/* Active Form */}
-      <Card className="p-6">
+      <Card className="p-6 bg-white/5 border-white/20">
         {renderActiveForm()}
       </Card>
     </div>
