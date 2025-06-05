@@ -82,7 +82,7 @@ export const TechTemplate: React.FC<TechTemplateProps> = ({ data }) => {
               <div className="grid grid-cols-2 gap-2 text-sm">
                 {skills.map((skill: string, index: number) => (
                   <div key={index} className="flex items-center">
-                    <span className="text-emerald-400 mr-2">></span>
+                    <span> className="text-emerald-400 mr-2">></span>
                     <span>{skill}</span>
                   </div>
                 ))}
