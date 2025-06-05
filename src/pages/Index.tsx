@@ -33,12 +33,19 @@ const Index = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-900 via-purple-900 to-violet-900 relative overflow-hidden">
-      {/* Animated background elements */}
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-gray-900 to-slate-800 relative overflow-hidden">
+      {/* Geometric background elements */}
       <div className="absolute inset-0">
-        <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse"></div>
-        <div className="absolute top-0 -right-4 w-72 h-72 bg-yellow-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-2000"></div>
-        <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-300 rounded-full mix-blend-multiply filter blur-xl opacity-70 animate-pulse animation-delay-4000"></div>
+        {/* Subtle gradient orbs */}
+        <div className="absolute top-20 -left-20 w-96 h-96 bg-gradient-to-br from-blue-500/10 to-indigo-600/10 rounded-full filter blur-3xl"></div>
+        <div className="absolute top-40 -right-32 w-80 h-80 bg-gradient-to-br from-purple-500/8 to-blue-600/8 rounded-full filter blur-3xl"></div>
+        <div className="absolute -bottom-20 left-1/3 w-72 h-72 bg-gradient-to-br from-indigo-500/10 to-purple-600/10 rounded-full filter blur-3xl"></div>
+        
+        {/* Subtle grid pattern */}
+        <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:60px_60px]"></div>
+        
+        {/* Subtle diagonal lines */}
+        <div className="absolute inset-0 bg-gradient-to-br from-transparent via-white/[0.01] to-transparent"></div>
       </div>
       
       {/* Content */}
@@ -50,7 +57,7 @@ const Index = () => {
             <h1 className="text-4xl font-bold text-white mb-4">
               AI Resume Builder
             </h1>
-            <p className="text-xl text-gray-200 max-w-2xl mx-auto">
+            <p className="text-xl text-gray-300 max-w-2xl mx-auto">
               Create professional, ATS-friendly resumes with AI-powered content suggestions
             </p>
           </div>
@@ -61,7 +68,7 @@ const Index = () => {
           />
 
           <div className="grid lg:grid-cols-2 gap-8 mt-8">
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-xl border border-white/20 p-6">
+            <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-6 hover:bg-white/[0.07] transition-all duration-300">
               <ResumeBuilder 
                 resumeData={resumeData}
                 activeSection={activeSection}
@@ -70,7 +77,7 @@ const Index = () => {
               />
             </div>
             
-            <div className="bg-white/10 backdrop-blur-lg rounded-xl shadow-xl border border-white/20 p-6 sticky top-8">
+            <div className="bg-white/5 backdrop-blur-xl rounded-2xl shadow-2xl border border-white/10 p-6 sticky top-8 hover:bg-white/[0.07] transition-all duration-300">
               <ResumePreview 
                 resumeData={resumeData}
                 template={resumeData.selectedTemplate}
