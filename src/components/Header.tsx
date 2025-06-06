@@ -9,8 +9,36 @@ import {
   DropdownMenuTrigger,
   DropdownMenuSeparator,
 } from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
 
-export const Header = () => {
+interface HeaderProps {
+  resumeData?: any;
+  onExport?: (format: 'pdf' | 'docx' | 'html') => void;
+}
+
+export const Header: React.FC<HeaderProps> = ({ resumeData, onExport }) => {
+  const { toast } = useToast();
+
+  const handleExport = (format: 'pdf' | 'docx' | 'html') => {
+    if (onExport) {
+      onExport(format);
+    } else {
+      // Default export handling
+      toast({
+        title: `Exporting as ${format.toUpperCase()}...`,
+        description: "Your resume is being prepared for download.",
+      });
+      
+      // Simulate export process
+      setTimeout(() => {
+        toast({
+          title: "Export Complete!",
+          description: `Your resume has been exported as ${format.toUpperCase()}.`,
+        });
+      }, 2000);
+    }
+  };
+
   return (
     <header className="bg-white/5 backdrop-blur-xl border-b border-white/10 shadow-lg">
       <div className="container mx-auto px-4 py-6">
@@ -21,7 +49,7 @@ export const Header = () => {
             </div>
             <div>
               <h2 className="text-2xl font-bold bg-gradient-to-r from-violet-400 to-cyan-400 bg-clip-text text-transparent">
-                ResumeFlow AI
+                Elevate Resume
               </h2>
               <p className="text-sm text-gray-400">Professional Resume Builder</p>
             </div>
@@ -63,15 +91,24 @@ export const Header = () => {
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-48 bg-slate-800/95 backdrop-blur-lg border-white/20">
-                <DropdownMenuItem className="text-gray-200 hover:bg-white/10 cursor-pointer">
+                <DropdownMenuItem 
+                  className="text-gray-200 hover:bg-white/10 cursor-pointer"
+                  onClick={() => handleExport('pdf')}
+                >
                   <FileText className="h-4 w-4 mr-2" />
                   Export as PDF
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-200 hover:bg-white/10 cursor-pointer">
+                <DropdownMenuItem 
+                  className="text-gray-200 hover:bg-white/10 cursor-pointer"
+                  onClick={() => handleExport('docx')}
+                >
                   <FileType className="h-4 w-4 mr-2" />
                   Export as DOCX
                 </DropdownMenuItem>
-                <DropdownMenuItem className="text-gray-200 hover:bg-white/10 cursor-pointer">
+                <DropdownMenuItem 
+                  className="text-gray-200 hover:bg-white/10 cursor-pointer"
+                  onClick={() => handleExport('html')}
+                >
                   <FileText className="h-4 w-4 mr-2" />
                   Export as HTML
                 </DropdownMenuItem>

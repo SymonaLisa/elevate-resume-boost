@@ -4,6 +4,7 @@ import { ResumeBuilder } from '@/components/ResumeBuilder';
 import { ResumePreview } from '@/components/ResumePreview';
 import { Header } from '@/components/Header';
 import { TemplateSelector } from '@/components/TemplateSelector';
+import { exportToPDF, exportToHTML, exportToWord } from '@/utils/exportUtils';
 
 const Index = () => {
   const [resumeData, setResumeData] = useState({
@@ -32,6 +33,22 @@ const Index = () => {
     }));
   };
 
+  const handleExport = (format: 'pdf' | 'docx' | 'html') => {
+    switch (format) {
+      case 'pdf':
+        exportToPDF(resumeData);
+        break;
+      case 'docx':
+        exportToWord(resumeData);
+        break;
+      case 'html':
+        exportToHTML(resumeData);
+        break;
+      default:
+        console.error('Unsupported export format:', format);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-violet-950 via-slate-900 to-cyan-950 relative overflow-hidden">
       {/* Dynamic background elements */}
@@ -52,7 +69,7 @@ const Index = () => {
       
       {/* Content */}
       <div className="relative z-10">
-        <Header />
+        <Header resumeData={resumeData} onExport={handleExport} />
         
         <div className="container mx-auto px-4 py-8">
           <div className="text-center mb-12">
@@ -61,7 +78,7 @@ const Index = () => {
                 <div className="w-6 h-6 bg-white rounded-sm"></div>
               </div>
               <h1 className="text-5xl font-bold bg-gradient-to-r from-violet-400 via-cyan-400 to-emerald-400 bg-clip-text text-transparent">
-                ResumeFlow AI
+                Elevate Resume
               </h1>
             </div>
             <p className="text-xl text-gray-300 max-w-3xl mx-auto leading-relaxed">
