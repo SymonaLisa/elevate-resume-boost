@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Mail, Phone, MapPin, Linkedin, Globe, Code } from 'lucide-react';
+import { Github, ExternalLink, Code, Database, Globe } from 'lucide-react';
 
 interface TechTemplateProps {
   data: any;
@@ -10,80 +10,84 @@ export const TechTemplate: React.FC<TechTemplateProps> = ({ data }) => {
   const { personalInfo, summary, experience, education, skills, projects } = data;
 
   return (
-    <div className="max-w-4xl mx-auto bg-white font-mono">
+    <div className="max-w-4xl mx-auto bg-gray-900 text-white font-mono">
       {/* Header */}
-      <div className="bg-gradient-to-r from-emerald-600 to-teal-600 text-white p-6 relative">
-        <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-16 translate-x-16"></div>
-        <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-12 -translate-x-12"></div>
+      <div className="bg-black p-6 border-l-4 border-green-400">
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+          <div className="w-3 h-3 bg-yellow-500 rounded-full"></div>
+          <div className="w-3 h-3 bg-green-500 rounded-full"></div>
+          <span className="text-gray-400 text-sm ml-4">~ {personalInfo.fullName || 'developer'}</span>
+        </div>
         
-        <div className="relative z-10">
-          <div className="flex items-center space-x-3 mb-3">
-            <Code className="h-8 w-8" />
-            <h1 className="text-3xl font-bold">
-              {personalInfo.fullName || 'Your Name'}
-            </h1>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3 text-sm">
-            {personalInfo.email && (
-              <div className="flex items-center space-x-2">
-                <Mail className="h-4 w-4" />
-                <span>{personalInfo.email}</span>
-              </div>
-            )}
-            {personalInfo.phone && (
-              <div className="flex items-center space-x-2">
-                <Phone className="h-4 w-4" />
-                <span>{personalInfo.phone}</span>
-              </div>
-            )}
-            {personalInfo.location && (
-              <div className="flex items-center space-x-2">
-                <MapPin className="h-4 w-4" />
-                <span>{personalInfo.location}</span>
-              </div>
-            )}
-            {personalInfo.linkedin && (
-              <div className="flex items-center space-x-2">
-                <Linkedin className="h-4 w-4" />
-                <span>{personalInfo.linkedin}</span>
-              </div>
-            )}
-            {personalInfo.website && (
-              <div className="flex items-center space-x-2 col-span-2">
-                <Globe className="h-4 w-4" />
-                <span>{personalInfo.website}</span>
-              </div>
-            )}
-          </div>
+        <h1 className="text-3xl font-bold text-green-400 mb-2">
+          $ whoami
+        </h1>
+        <div className="text-xl text-white mb-4">
+          {personalInfo.fullName || 'Your Name'}
+        </div>
+        
+        <div className="space-y-1 text-sm text-gray-300">
+          {personalInfo.email && (
+            <div className="flex items-center space-x-2">
+              <span className="text-green-400">email:</span>
+              <span>{personalInfo.email}</span>
+            </div>
+          )}
+          {personalInfo.phone && (
+            <div className="flex items-center space-x-2">
+              <span className="text-green-400">phone:</span>
+              <span>{personalInfo.phone}</span>
+            </div>
+          )}
+          {personalInfo.location && (
+            <div className="flex items-center space-x-2">
+              <span className="text-green-400">location:</span>
+              <span>{personalInfo.location}</span>
+            </div>
+          )}
+          {personalInfo.linkedin && (
+            <div className="flex items-center space-x-2">
+              <span className="text-green-400">linkedin:</span>
+              <span>{personalInfo.linkedin}</span>
+            </div>
+          )}
+          {personalInfo.website && (
+            <div className="flex items-center space-x-2">
+              <span className="text-green-400">website:</span>
+              <span>{personalInfo.website}</span>
+            </div>
+          )}
         </div>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-6 space-y-8">
         {/* Summary */}
         {summary && (
-          <section className="border border-emerald-200 rounded-lg p-4 bg-emerald-50">
-            <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-              <span className="text-emerald-600">//</span>
-              <span className="ml-2">About</span>
+          <section>
+            <h2 className="text-lg font-bold text-green-400 mb-3 flex items-center space-x-2">
+              <Code className="h-5 w-5" />
+              <span>$ cat about.md</span>
             </h2>
-            <p className="text-gray-700 leading-relaxed">{summary}</p>
+            <div className="bg-gray-800 p-4 rounded border-l-4 border-green-400">
+              <p className="text-gray-200 leading-relaxed">{summary}</p>
+            </div>
           </section>
         )}
 
         {/* Skills */}
         {skills.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-              <span className="text-emerald-600">//</span>
-              <span className="ml-2">Skills</span>
+            <h2 className="text-lg font-bold text-green-400 mb-3 flex items-center space-x-2">
+              <Database className="h-5 w-5" />
+              <span>$ ls skills/</span>
             </h2>
-            <div className="bg-gray-900 text-green-400 p-4 rounded-lg">
-              <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="bg-gray-800 p-4 rounded">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                 {skills.map((skill: string, index: number) => (
-                  <div key={index} className="flex items-center">
-                    <span className="text-emerald-400 mr-2">{'>'}</span>
-                    <span>{skill}</span>
+                  <div key={index} className="flex items-center space-x-2">
+                    <span className="text-green-400">></span>
+                    <span className="text-gray-200">{skill}</span>
                   </div>
                 ))}
               </div>
@@ -94,25 +98,25 @@ export const TechTemplate: React.FC<TechTemplateProps> = ({ data }) => {
         {/* Experience */}
         {experience.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-              <span className="text-emerald-600">//</span>
-              <span className="ml-2">Experience</span>
+            <h2 className="text-lg font-bold text-green-400 mb-3 flex items-center space-x-2">
+              <Globe className="h-5 w-5" />
+              <span>$ git log --experience</span>
             </h2>
             <div className="space-y-4">
-              {experience.map((exp: any, index: number) => (
-                <div key={exp.id} className="border-l-4 border-emerald-500 pl-4">
+              {experience.map((exp: any) => (
+                <div key={exp.id} className="bg-gray-800 p-4 rounded border-l-4 border-blue-400">
                   <div className="flex justify-between items-start mb-2">
                     <div>
-                      <h3 className="font-semibold text-gray-800 text-lg">{exp.title}</h3>
-                      <p className="text-emerald-600 font-medium">{exp.company}</p>
-                      {exp.location && <p className="text-gray-600 text-sm">{exp.location}</p>}
+                      <h3 className="text-xl font-bold text-blue-400">{exp.title}</h3>
+                      <p className="text-yellow-400 font-semibold">{exp.company}</p>
+                      {exp.location && <p className="text-gray-400 text-sm">{exp.location}</p>}
                     </div>
-                    <div className="bg-emerald-100 px-3 py-1 rounded text-sm text-emerald-700">
+                    <span className="text-gray-400 text-sm bg-gray-700 px-2 py-1 rounded">
                       {exp.startDate} - {exp.current ? 'Present' : exp.endDate}
-                    </div>
+                    </span>
                   </div>
                   {exp.description && (
-                    <div className="text-gray-700 text-sm whitespace-pre-line bg-gray-50 p-3 rounded">
+                    <div className="text-gray-200 text-sm whitespace-pre-line mt-3 pl-4 border-l-2 border-gray-600">
                       {exp.description}
                     </div>
                   )}
@@ -125,33 +129,31 @@ export const TechTemplate: React.FC<TechTemplateProps> = ({ data }) => {
         {/* Projects */}
         {projects.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-              <span className="text-emerald-600">//</span>
-              <span className="ml-2">Projects</span>
+            <h2 className="text-lg font-bold text-green-400 mb-3 flex items-center space-x-2">
+              <Github className="h-5 w-5" />
+              <span>$ ls projects/</span>
             </h2>
             <div className="grid md:grid-cols-2 gap-4">
               {projects.map((project: any) => (
-                <div key={project.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                <div key={project.id} className="bg-gray-800 p-4 rounded border border-gray-700">
                   <div className="flex justify-between items-start mb-2">
-                    <h3 className="font-semibold text-gray-800">{project.name}</h3>
+                    <h3 className="font-bold text-yellow-400">{project.name}</h3>
                     {project.link && (
                       <a
                         href={project.link}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-emerald-600 text-sm hover:underline"
+                        className="text-green-400 hover:text-green-300"
                       >
-                        View &rarr;
+                        <ExternalLink className="h-4 w-4" />
                       </a>
                     )}
                   </div>
                   {project.technologies && (
-                    <div className="text-emerald-600 text-sm mb-2 font-mono">
-                      [{project.technologies}]
-                    </div>
+                    <p className="text-blue-400 text-sm mb-2">{project.technologies}</p>
                   )}
                   {project.description && (
-                    <p className="text-gray-700 text-sm">{project.description}</p>
+                    <p className="text-gray-200 text-sm">{project.description}</p>
                   )}
                 </div>
               ))}
@@ -162,20 +164,15 @@ export const TechTemplate: React.FC<TechTemplateProps> = ({ data }) => {
         {/* Education */}
         {education.length > 0 && (
           <section>
-            <h2 className="text-xl font-bold text-gray-800 mb-3 flex items-center">
-              <span className="text-emerald-600">//</span>
-              <span className="ml-2">Education</span>
-            </h2>
-            <div className="space-y-3">
+            <h2 className="text-lg font-bold text-green-400 mb-3">$ cat education.log</h2>
+            <div className="bg-gray-800 p-4 rounded space-y-3">
               {education.map((edu: any) => (
-                <div key={edu.id} className="flex justify-between items-start bg-gray-50 p-3 rounded">
-                  <div>
-                    <h3 className="font-semibold text-gray-800">{edu.degree}</h3>
-                    <p className="text-emerald-600">{edu.school}</p>
-                    {edu.location && <p className="text-gray-600 text-sm">{edu.location}</p>}
-                  </div>
-                  <div className="text-sm text-gray-500">
-                    {edu.graduationDate}
+                <div key={edu.id} className="border-l-2 border-purple-400 pl-4">
+                  <h3 className="font-bold text-purple-400">{edu.degree}</h3>
+                  <p className="text-yellow-400">{edu.school}</p>
+                  <div className="flex justify-between text-gray-400 text-sm">
+                    {edu.location && <span>{edu.location}</span>}
+                    <span>{edu.graduationDate}</span>
                   </div>
                 </div>
               ))}

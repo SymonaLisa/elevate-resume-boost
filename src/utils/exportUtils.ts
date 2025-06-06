@@ -13,49 +13,49 @@ interface ExportData {
 
 export const exportToPDF = async (resumeData: ExportData) => {
   try {
-    // Create a new window with the resume content
+    // Create a new window with the resume content for PDF export
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      throw new Error('Pop-up blocked');
+      throw new Error('Pop-up blocked. Please allow pop-ups for this site.');
     }
 
-    const htmlContent = generateHTMLContent(resumeData);
+    const htmlContent = generateATSOptimizedHTML(resumeData);
     
     printWindow.document.write(`
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
         <head>
           <title>${resumeData.personalInfo.fullName || 'Resume'}</title>
           <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <style>
-            ${getPrintStyles()}
+            ${getATSOptimizedPrintStyles()}
           </style>
         </head>
         <body>
           ${htmlContent}
+          <script>
+            window.onload = function() {
+              setTimeout(function() {
+                window.print();
+              }, 1000);
+            };
+          </script>
         </body>
       </html>
     `);
     
     printWindow.document.close();
     
-    // Wait for content to load then trigger print
-    printWindow.onload = () => {
-      setTimeout(() => {
-        printWindow.print();
-        printWindow.close();
-      }, 500);
-    };
-    
     toast({
       title: "PDF Export Ready",
-      description: "Print dialog opened. Choose 'Save as PDF' to download.",
+      description: "Print dialog opened. Choose 'Save as PDF' to download your ATS-optimized resume.",
     });
   } catch (error) {
     console.error('PDF export error:', error);
     toast({
       title: "Export Error",
-      description: "Failed to export PDF. Please try again.",
+      description: "Failed to export PDF. Please check if pop-ups are enabled.",
       variant: "destructive",
     });
   }
@@ -63,7 +63,7 @@ export const exportToPDF = async (resumeData: ExportData) => {
 
 export const exportToHTML = (resumeData: ExportData) => {
   try {
-    const htmlContent = generateHTMLContent(resumeData);
+    const htmlContent = generateATSOptimizedHTML(resumeData);
     const fullHTML = `
       <!DOCTYPE html>
       <html lang="en">
@@ -71,8 +71,10 @@ export const exportToHTML = (resumeData: ExportData) => {
           <meta charset="UTF-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>${resumeData.personalInfo.fullName || 'Resume'}</title>
+          <meta name="description" content="Professional resume for ${resumeData.personalInfo.fullName}">
+          <meta name="keywords" content="resume, CV, ${resumeData.skills.join(', ')}">
           <style>
-            ${getWebStyles()}
+            ${getATSOptimizedWebStyles()}
           </style>
         </head>
         <body>
@@ -81,11 +83,11 @@ export const exportToHTML = (resumeData: ExportData) => {
       </html>
     `;
     
-    const blob = new Blob([fullHTML], { type: 'text/html' });
+    const blob = new Blob([fullHTML], { type: 'text/html;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${resumeData.personalInfo.fullName || 'resume'}.html`;
+    link.download = `${(resumeData.personalInfo.fullName || 'resume').replace(/\s+/g, '_')}.html`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -93,7 +95,7 @@ export const exportToHTML = (resumeData: ExportData) => {
     
     toast({
       title: "HTML Export Complete",
-      description: "Your resume has been downloaded as an HTML file.",
+      description: "Your ATS-optimized resume has been downloaded as an HTML file.",
     });
   } catch (error) {
     console.error('HTML export error:', error);
@@ -107,14 +109,14 @@ export const exportToHTML = (resumeData: ExportData) => {
 
 export const exportToWord = (resumeData: ExportData) => {
   try {
-    const wordContent = generateWordContent(resumeData);
+    const wordContent = generateATSWordContent(resumeData);
     const blob = new Blob([wordContent], { 
       type: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' 
     });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.download = `${resumeData.personalInfo.fullName || 'resume'}.docx`;
+    link.download = `${(resumeData.personalInfo.fullName || 'resume').replace(/\s+/g, '_')}.docx`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -122,7 +124,7 @@ export const exportToWord = (resumeData: ExportData) => {
     
     toast({
       title: "Word Export Complete",
-      description: "Your resume has been downloaded as a Word document.",
+      description: "Your ATS-compatible resume has been downloaded as a Word document.",
     });
   } catch (error) {
     console.error('Word export error:', error);
@@ -134,140 +136,189 @@ export const exportToWord = (resumeData: ExportData) => {
   }
 };
 
-const generateHTMLContent = (data: ExportData): string => {
+// Generate ATS-optimized HTML structure
+const generateATSOptimizedHTML = (data: ExportData): string => {
   const { personalInfo, summary, experience, education, skills, projects } = data;
   
   return `
     <div class="resume-container">
+      <!-- Header Section -->
       <header class="resume-header">
-        <h1>${personalInfo.fullName || 'Your Name'}</h1>
+        <h1 class="candidate-name">${personalInfo.fullName || 'Your Name'}</h1>
         <div class="contact-info">
-          ${personalInfo.email ? `<span>${personalInfo.email}</span>` : ''}
-          ${personalInfo.phone ? `<span>${personalInfo.phone}</span>` : ''}
-          ${personalInfo.location ? `<span>${personalInfo.location}</span>` : ''}
-          ${personalInfo.linkedin ? `<span>${personalInfo.linkedin}</span>` : ''}
-          ${personalInfo.website ? `<span>${personalInfo.website}</span>` : ''}
+          ${personalInfo.email ? `<div class="contact-item">
+            <span class="contact-label">Email:</span>
+            <span class="contact-value">${personalInfo.email}</span>
+          </div>` : ''}
+          ${personalInfo.phone ? `<div class="contact-item">
+            <span class="contact-label">Phone:</span>
+            <span class="contact-value">${personalInfo.phone}</span>
+          </div>` : ''}
+          ${personalInfo.location ? `<div class="contact-item">
+            <span class="contact-label">Location:</span>
+            <span class="contact-value">${personalInfo.location}</span>
+          </div>` : ''}
+          ${personalInfo.linkedin ? `<div class="contact-item">
+            <span class="contact-label">LinkedIn:</span>
+            <span class="contact-value">${personalInfo.linkedin}</span>
+          </div>` : ''}
+          ${personalInfo.website ? `<div class="contact-item">
+            <span class="contact-label">Website:</span>
+            <span class="contact-value">${personalInfo.website}</span>
+          </div>` : ''}
         </div>
       </header>
 
       ${summary ? `
         <section class="resume-section">
-          <h2>Professional Summary</h2>
-          <p>${summary}</p>
+          <h2 class="section-title">Professional Summary</h2>
+          <div class="section-content">
+            <p class="summary-text">${summary}</p>
+          </div>
         </section>
       ` : ''}
 
       ${experience.length > 0 ? `
         <section class="resume-section">
-          <h2>Experience</h2>
-          ${experience.map(exp => `
-            <div class="experience-item">
-              <div class="experience-header">
-                <h3>${exp.title}</h3>
-                <span class="date">${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}</span>
+          <h2 class="section-title">Professional Experience</h2>
+          <div class="section-content">
+            ${experience.map(exp => `
+              <div class="experience-item">
+                <h3 class="job-title">${exp.title}</h3>
+                <div class="company-info">
+                  <span class="company-name">${exp.company}</span>
+                  ${exp.location ? `<span class="job-location">${exp.location}</span>` : ''}
+                </div>
+                <div class="employment-dates">
+                  <span class="start-date">${exp.startDate}</span> - 
+                  <span class="end-date">${exp.current ? 'Present' : exp.endDate}</span>
+                </div>
+                ${exp.description ? `<div class="job-description">
+                  ${exp.description.split('\n').map(line => line.trim() ? `<p>${line}</p>` : '').join('')}
+                </div>` : ''}
               </div>
-              <div class="company">${exp.company}</div>
-              ${exp.location ? `<div class="location">${exp.location}</div>` : ''}
-              ${exp.description ? `<div class="description">${exp.description}</div>` : ''}
-            </div>
-          `).join('')}
-        </section>
-      ` : ''}
-
-      ${education.length > 0 ? `
-        <section class="resume-section">
-          <h2>Education</h2>
-          ${education.map(edu => `
-            <div class="education-item">
-              <div class="education-header">
-                <h3>${edu.degree}</h3>
-                <span class="date">${edu.graduationDate}</span>
-              </div>
-              <div class="school">${edu.school}</div>
-              ${edu.location ? `<div class="location">${edu.location}</div>` : ''}
-            </div>
-          `).join('')}
+            `).join('')}
+          </div>
         </section>
       ` : ''}
 
       ${skills.length > 0 ? `
         <section class="resume-section">
-          <h2>Skills</h2>
-          <div class="skills-list">
-            ${skills.map(skill => `<span class="skill">${skill}</span>`).join('')}
+          <h2 class="section-title">Skills</h2>
+          <div class="section-content">
+            <div class="skills-list">
+              ${skills.map(skill => `<span class="skill-item">${skill}</span>`).join('')}
+            </div>
+          </div>
+        </section>
+      ` : ''}
+
+      ${education.length > 0 ? `
+        <section class="resume-section">
+          <h2 class="section-title">Education</h2>
+          <div class="section-content">
+            ${education.map(edu => `
+              <div class="education-item">
+                <h3 class="degree-title">${edu.degree}</h3>
+                <div class="school-info">
+                  <span class="school-name">${edu.school}</span>
+                  ${edu.location ? `<span class="school-location">${edu.location}</span>` : ''}
+                </div>
+                <div class="graduation-date">${edu.graduationDate}</div>
+              </div>
+            `).join('')}
           </div>
         </section>
       ` : ''}
 
       ${projects.length > 0 ? `
         <section class="resume-section">
-          <h2>Projects</h2>
-          ${projects.map(project => `
-            <div class="project-item">
-              <h3>${project.name}</h3>
-              ${project.technologies ? `<div class="technologies">${project.technologies}</div>` : ''}
-              ${project.description ? `<div class="description">${project.description}</div>` : ''}
-              ${project.link ? `<div class="link"><a href="${project.link}" target="_blank">${project.link}</a></div>` : ''}
-            </div>
-          `).join('')}
+          <h2 class="section-title">Projects</h2>
+          <div class="section-content">
+            ${projects.map(project => `
+              <div class="project-item">
+                <h3 class="project-title">${project.name}</h3>
+                ${project.technologies ? `<div class="project-technologies">${project.technologies}</div>` : ''}
+                ${project.description ? `<div class="project-description">${project.description}</div>` : ''}
+                ${project.link ? `<div class="project-link"><a href="${project.link}" target="_blank">${project.link}</a></div>` : ''}
+              </div>
+            `).join('')}
+          </div>
         </section>
       ` : ''}
     </div>
   `;
 };
 
-const generateWordContent = (data: ExportData): string => {
-  // Generate RTF content that can be opened by Word
+// ATS-optimized Word content (RTF format)
+const generateATSWordContent = (data: ExportData): string => {
   const { personalInfo, summary, experience, education, skills, projects } = data;
   
-  let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 Times New Roman;}}';
+  let rtfContent = '{\\rtf1\\ansi\\deff0 {\\fonttbl {\\f0 \\froman Times New Roman;}{\\f1 \\fswiss Arial;}}';
   rtfContent += '\\f0\\fs24 ';
   
   // Header
-  rtfContent += `{\\b\\fs32 ${personalInfo.fullName || 'Your Name'}}\\par\\par`;
-  rtfContent += `${personalInfo.email || ''} | ${personalInfo.phone || ''} | ${personalInfo.location || ''}\\par`;
+  rtfContent += `{\\b\\fs32\\qc ${personalInfo.fullName || 'Your Name'}}\\par\\par`;
+  rtfContent += '\\qc ';
+  if (personalInfo.email) rtfContent += `${personalInfo.email} `;
+  if (personalInfo.phone) rtfContent += `| ${personalInfo.phone} `;
+  if (personalInfo.location) rtfContent += `| ${personalInfo.location}`;
+  rtfContent += '\\par';
   if (personalInfo.linkedin) rtfContent += `${personalInfo.linkedin}\\par`;
   if (personalInfo.website) rtfContent += `${personalInfo.website}\\par`;
-  rtfContent += '\\par';
+  rtfContent += '\\par\\ql ';
   
   // Summary
   if (summary) {
-    rtfContent += '{\\b PROFESSIONAL SUMMARY}\\par';
+    rtfContent += '{\\b\\fs28 PROFESSIONAL SUMMARY}\\par';
+    rtfContent += '\\line ';
     rtfContent += `${summary}\\par\\par`;
   }
   
   // Experience
   if (experience.length > 0) {
-    rtfContent += '{\\b EXPERIENCE}\\par';
+    rtfContent += '{\\b\\fs28 PROFESSIONAL EXPERIENCE}\\par';
+    rtfContent += '\\line ';
     experience.forEach(exp => {
-      rtfContent += `{\\b ${exp.title}} - ${exp.company}\\par`;
-      rtfContent += `${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}\\par`;
-      if (exp.location) rtfContent += `${exp.location}\\par`;
-      if (exp.description) rtfContent += `${exp.description}\\par`;
+      rtfContent += `{\\b\\fs24 ${exp.title}}\\par`;
+      rtfContent += `{\\b ${exp.company}}`;
+      if (exp.location) rtfContent += ` | ${exp.location}`;
       rtfContent += '\\par';
-    });
-  }
-  
-  // Education
-  if (education.length > 0) {
-    rtfContent += '{\\b EDUCATION}\\par';
-    education.forEach(edu => {
-      rtfContent += `{\\b ${edu.degree}} - ${edu.school}\\par`;
-      rtfContent += `${edu.graduationDate}\\par`;
-      if (edu.location) rtfContent += `${edu.location}\\par`;
+      rtfContent += `${exp.startDate} - ${exp.current ? 'Present' : exp.endDate}\\par`;
+      if (exp.description) {
+        const descriptions = exp.description.split('\n').filter(line => line.trim());
+        descriptions.forEach(desc => {
+          rtfContent += `\\bullet ${desc}\\par`;
+        });
+      }
       rtfContent += '\\par';
     });
   }
   
   // Skills
   if (skills.length > 0) {
-    rtfContent += '{\\b SKILLS}\\par';
-    rtfContent += `${skills.join(', ')}\\par\\par`;
+    rtfContent += '{\\b\\fs28 SKILLS}\\par';
+    rtfContent += '\\line ';
+    rtfContent += `${skills.join(' | ')}\\par\\par`;
+  }
+  
+  // Education
+  if (education.length > 0) {
+    rtfContent += '{\\b\\fs28 EDUCATION}\\par';
+    rtfContent += '\\line ';
+    education.forEach(edu => {
+      rtfContent += `{\\b ${edu.degree}}\\par`;
+      rtfContent += `${edu.school}`;
+      if (edu.location) rtfContent += ` | ${edu.location}`;
+      rtfContent += '\\par';
+      rtfContent += `${edu.graduationDate}\\par\\par`;
+    });
   }
   
   // Projects
   if (projects.length > 0) {
-    rtfContent += '{\\b PROJECTS}\\par';
+    rtfContent += '{\\b\\fs28 PROJECTS}\\par';
+    rtfContent += '\\line ';
     projects.forEach(project => {
       rtfContent += `{\\b ${project.name}}\\par`;
       if (project.technologies) rtfContent += `Technologies: ${project.technologies}\\par`;
@@ -281,53 +332,240 @@ const generateWordContent = (data: ExportData): string => {
   return rtfContent;
 };
 
-const getPrintStyles = (): string => `
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Times New Roman', serif; font-size: 12pt; line-height: 1.4; color: #000; }
-  .resume-container { max-width: 8.5in; margin: 0 auto; padding: 0.5in; }
-  .resume-header { text-align: center; margin-bottom: 1em; border-bottom: 2px solid #000; padding-bottom: 0.5em; }
-  .resume-header h1 { font-size: 24pt; font-weight: bold; margin-bottom: 0.5em; }
-  .contact-info { font-size: 10pt; }
-  .contact-info span { margin: 0 0.5em; }
-  .resume-section { margin-bottom: 1.5em; }
-  .resume-section h2 { font-size: 14pt; font-weight: bold; margin-bottom: 0.5em; text-transform: uppercase; border-bottom: 1px solid #000; padding-bottom: 0.2em; }
-  .experience-item, .education-item, .project-item { margin-bottom: 1em; }
-  .experience-header, .education-header { display: flex; justify-content: space-between; align-items: baseline; }
-  .experience-header h3, .education-header h3 { font-size: 12pt; font-weight: bold; }
-  .date { font-size: 10pt; font-style: italic; }
-  .company, .school { font-size: 11pt; font-weight: bold; margin-bottom: 0.2em; }
-  .location { font-size: 10pt; color: #666; margin-bottom: 0.2em; }
-  .description { font-size: 11pt; margin-top: 0.3em; }
-  .skills-list { display: flex; flex-wrap: wrap; gap: 0.5em; }
-  .skill { background: #f0f0f0; padding: 0.2em 0.5em; border-radius: 3px; font-size: 10pt; }
-  .technologies { font-size: 10pt; font-style: italic; color: #666; margin-bottom: 0.2em; }
-  .link a { color: #0066cc; text-decoration: underline; }
+// ATS-optimized print styles
+const getATSOptimizedPrintStyles = (): string => `
+  * { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+  }
+  
+  body { 
+    font-family: 'Times New Roman', 'Georgia', serif; 
+    font-size: 11pt; 
+    line-height: 1.3; 
+    color: #000; 
+    background: white;
+  }
+  
+  .resume-container { 
+    max-width: 8.5in; 
+    margin: 0 auto; 
+    padding: 0.5in; 
+    background: white;
+  }
+  
+  .resume-header { 
+    text-align: center; 
+    margin-bottom: 0.3in; 
+    border-bottom: 1pt solid #000;
+    padding-bottom: 0.1in;
+  }
+  
+  .candidate-name { 
+    font-size: 18pt; 
+    font-weight: bold; 
+    margin-bottom: 0.1in; 
+    text-transform: uppercase;
+  }
+  
+  .contact-info { 
+    font-size: 10pt; 
+    line-height: 1.2;
+  }
+  
+  .contact-item { 
+    display: inline-block; 
+    margin: 0 0.2in;
+  }
+  
+  .resume-section { 
+    margin-bottom: 0.2in; 
+    page-break-inside: avoid;
+  }
+  
+  .section-title { 
+    font-size: 12pt; 
+    font-weight: bold; 
+    text-transform: uppercase; 
+    border-bottom: 0.5pt solid #000; 
+    margin-bottom: 0.1in;
+    padding-bottom: 0.05in;
+  }
+  
+  .experience-item, .education-item, .project-item { 
+    margin-bottom: 0.15in; 
+    page-break-inside: avoid;
+  }
+  
+  .job-title, .degree-title, .project-title { 
+    font-size: 11pt; 
+    font-weight: bold; 
+    margin-bottom: 0.05in;
+  }
+  
+  .company-name, .school-name { 
+    font-weight: bold; 
+  }
+  
+  .employment-dates, .graduation-date { 
+    font-style: italic; 
+    font-size: 10pt; 
+    margin-bottom: 0.05in;
+  }
+  
+  .job-description p, .project-description { 
+    margin-bottom: 0.05in; 
+    text-align: justify;
+  }
+  
+  .skills-list { 
+    line-height: 1.4;
+  }
+  
+  .skill-item { 
+    display: inline; 
+  }
+  
+  .skill-item:not(:last-child):after { 
+    content: ' | '; 
+  }
+  
+  @page { 
+    margin: 0.5in; 
+  }
+  
   @media print { 
-    body { -webkit-print-color-adjust: exact; }
-    .resume-container { padding: 0; }
+    body { 
+      -webkit-print-color-adjust: exact; 
+      print-color-adjust: exact;
+    }
+    .resume-container { 
+      padding: 0; 
+      margin: 0;
+    }
   }
 `;
 
-const getWebStyles = (): string => `
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; font-size: 14px; line-height: 1.6; color: #333; background: #f5f5f5; padding: 2rem; }
-  .resume-container { max-width: 800px; margin: 0 auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
-  .resume-header { text-align: center; margin-bottom: 2rem; border-bottom: 3px solid #007acc; padding-bottom: 1rem; }
-  .resume-header h1 { font-size: 2.5rem; font-weight: bold; margin-bottom: 0.5rem; color: #007acc; }
-  .contact-info { font-size: 0.9rem; color: #666; }
-  .contact-info span { margin: 0 1rem; }
-  .resume-section { margin-bottom: 2rem; }
-  .resume-section h2 { font-size: 1.3rem; font-weight: bold; margin-bottom: 1rem; text-transform: uppercase; color: #007acc; border-bottom: 2px solid #007acc; padding-bottom: 0.3rem; }
-  .experience-item, .education-item, .project-item { margin-bottom: 1.5rem; padding: 1rem; background: #f9f9f9; border-radius: 5px; }
-  .experience-header, .education-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 0.5rem; }
-  .experience-header h3, .education-header h3 { font-size: 1.1rem; font-weight: bold; color: #333; }
-  .date { font-size: 0.9rem; font-style: italic; color: #666; background: #e0e0e0; padding: 0.2rem 0.5rem; border-radius: 3px; }
-  .company, .school { font-size: 1rem; font-weight: 600; color: #007acc; margin-bottom: 0.3rem; }
-  .location { font-size: 0.9rem; color: #666; margin-bottom: 0.3rem; }
-  .description { font-size: 0.95rem; margin-top: 0.5rem; }
-  .skills-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
-  .skill { background: #007acc; color: white; padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.9rem; }
-  .technologies { font-size: 0.9rem; font-style: italic; color: #666; margin-bottom: 0.3rem; }
-  .link a { color: #007acc; text-decoration: none; }
-  .link a:hover { text-decoration: underline; }
+// ATS-optimized web styles
+const getATSOptimizedWebStyles = (): string => `
+  * { 
+    margin: 0; 
+    padding: 0; 
+    box-sizing: border-box; 
+  }
+  
+  body { 
+    font-family: 'Arial', 'Helvetica', sans-serif; 
+    font-size: 14px; 
+    line-height: 1.5; 
+    color: #333; 
+    background: #f8f9fa; 
+    padding: 2rem;
+  }
+  
+  .resume-container { 
+    max-width: 800px; 
+    margin: 0 auto; 
+    background: white; 
+    padding: 2rem; 
+    border-radius: 8px; 
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+  }
+  
+  .resume-header { 
+    text-align: center; 
+    margin-bottom: 2rem; 
+    border-bottom: 2px solid #007acc; 
+    padding-bottom: 1rem;
+  }
+  
+  .candidate-name { 
+    font-size: 2.5rem; 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+    color: #007acc;
+  }
+  
+  .contact-info { 
+    font-size: 0.9rem; 
+    color: #666;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+  
+  .resume-section { 
+    margin-bottom: 2rem;
+  }
+  
+  .section-title { 
+    font-size: 1.4rem; 
+    font-weight: bold; 
+    margin-bottom: 1rem; 
+    color: #007acc; 
+    border-bottom: 2px solid #007acc; 
+    padding-bottom: 0.3rem;
+  }
+  
+  .experience-item, .education-item, .project-item { 
+    margin-bottom: 1.5rem; 
+    padding: 1rem; 
+    background: #f8f9fa; 
+    border-radius: 5px; 
+    border-left: 4px solid #007acc;
+  }
+  
+  .job-title, .degree-title, .project-title { 
+    font-size: 1.2rem; 
+    font-weight: bold; 
+    margin-bottom: 0.5rem; 
+    color: #333;
+  }
+  
+  .company-name, .school-name { 
+    font-weight: 600; 
+    color: #007acc; 
+    font-size: 1.1rem;
+  }
+  
+  .employment-dates, .graduation-date { 
+    font-style: italic; 
+    color: #666; 
+    margin-bottom: 0.5rem;
+    background: #e9ecef;
+    padding: 0.2rem 0.5rem;
+    border-radius: 3px;
+    display: inline-block;
+  }
+  
+  .job-description p, .project-description { 
+    margin-bottom: 0.5rem; 
+    line-height: 1.6;
+  }
+  
+  .skills-list { 
+    display: flex; 
+    flex-wrap: wrap; 
+    gap: 0.5rem;
+  }
+  
+  .skill-item { 
+    background: #007acc; 
+    color: white; 
+    padding: 0.3rem 0.8rem; 
+    border-radius: 20px; 
+    font-size: 0.9rem; 
+    font-weight: 500;
+  }
+  
+  a { 
+    color: #007acc; 
+    text-decoration: none; 
+  }
+  
+  a:hover { 
+    text-decoration: underline; 
+  }
 `;
