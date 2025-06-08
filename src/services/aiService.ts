@@ -9,6 +9,7 @@ export interface AIGenerateRequest {
     experience?: any[];
     skills?: string[];
     targetRole?: string;
+    personalInfo?: any;
   };
   currentContent?: string;
 }
@@ -24,7 +25,7 @@ class AIService {
   private baseUrl = 'https://api.openai.com/v1/chat/completions';
   
   async generateContent(request: AIGenerateRequest): Promise<AIResponse> {
-    // For demo purposes, we'll use predefined responses
+    // For demo purposes, we'll use context-aware responses
     // In a real implementation, this would connect to an AI service
     
     switch (request.type) {
@@ -44,101 +45,253 @@ class AIService {
   }
 
   private async generateSummary(request: AIGenerateRequest): Promise<AIResponse> {
-    const summaries = [
-      "Results-driven professional with 5+ years of experience in software development and project management. Proven track record of delivering scalable solutions that improved system performance by 40% and reduced operational costs by 25%. Expert in modern web technologies with strong leadership and collaboration skills.",
-      "Dynamic marketing professional with expertise in digital campaigns, brand development, and data analytics. Successfully managed multi-million dollar campaigns resulting in 35% increase in customer acquisition and 50% improvement in ROI. Strong background in market research and consumer behavior analysis.",
-      "Experienced financial analyst with deep expertise in investment strategies, risk assessment, and portfolio management. Track record of generating 20%+ annual returns while maintaining risk-adjusted performance metrics. Strong analytical skills with proficiency in advanced financial modeling and market analysis."
-    ];
+    const { context } = request;
+    const hasExperience = context?.experience && context.experience.length > 0;
+    const hasSkills = context?.skills && context.skills.length > 0;
+    const name = context?.personalInfo?.fullName || 'Professional';
     
-    const randomSummary = summaries[Math.floor(Math.random() * summaries.length)];
+    let summary = '';
+    
+    if (hasExperience) {
+      const experienceCount = context.experience.length;
+      const recentJob = context.experience[0];
+      const skills = hasSkills ? context.skills.slice(0, 3).join(', ') : 'various technologies';
+      
+      summary = `${experienceCount > 1 ? 'Experienced' : 'Motivated'} professional with ${experienceCount > 1 ? `${experienceCount}+ years` : 'proven experience'} in ${recentJob?.title || 'their field'}. ${recentJob?.company ? `Currently at ${recentJob.company}, ` : ''}demonstrated expertise in ${skills} and ${experienceCount > 1 ? 'leadership' : 'problem-solving'}. Track record of delivering high-quality solutions and contributing to team success through ${hasSkills && context.skills.length > 3 ? 'technical excellence' : 'dedication and innovation'}.`;
+    } else if (hasSkills) {
+      const skillCount = context.skills.length;
+      const primarySkills = context.skills.slice(0, 3).join(', ');
+      
+      summary = `Skilled professional with expertise in ${primarySkills}${skillCount > 3 ? ` and ${skillCount - 3}+ other technologies` : ''}. Passionate about leveraging technical skills to create innovative solutions and drive business value. Committed to continuous learning and staying current with industry best practices.`;
+    } else {
+      summary = `Dedicated professional with a strong foundation in problem-solving and analytical thinking. Eager to contribute technical skills and fresh perspectives to challenging projects. Committed to continuous learning and professional growth in a dynamic environment.`;
+    }
     
     return {
-      content: randomSummary,
+      content: summary,
       suggestions: [
         "Include specific metrics and achievements",
-        "Mention relevant technical skills",
-        "Highlight leadership experience",
-        "Add industry-specific keywords"
+        "Mention relevant technical skills from your experience",
+        "Highlight leadership or collaboration experience",
+        "Add industry-specific keywords relevant to your target role"
       ]
     };
   }
 
   private async enhanceExperience(request: AIGenerateRequest): Promise<AIResponse> {
+    const { context, currentContent } = request;
+    
+    let enhancedContent = currentContent || '';
+    const suggestions = [
+      "Start each bullet point with strong action verbs (Led, Developed, Implemented)",
+      "Quantify achievements with specific numbers and percentages",
+      "Focus on impact and results rather than just responsibilities",
+      "Align descriptions with requirements from your target job posting"
+    ];
+
+    if (currentContent && currentContent.length > 0) {
+      // Add context-specific suggestions based on content
+      if (!currentContent.includes('%') && !currentContent.match(/\d+/)) {
+        suggestions.unshift("Add specific metrics (e.g., 'increased efficiency by 25%')");
+      }
+      if (!currentContent.match(/\b(led|managed|developed|implemented|created|designed|optimized)\b/i)) {
+        suggestions.unshift("Use stronger action verbs to start your bullet points");
+      }
+    }
+    
     return {
-      content: "Enhanced experience descriptions with quantified achievements and impact metrics",
-      suggestions: [
-        "Use action verbs to start bullet points",
-        "Include specific numbers and percentages",
-        "Focus on results and impact",
-        "Align with target job requirements"
-      ]
+      content: enhancedContent,
+      suggestions
     };
   }
 
   private async suggestSkills(request: AIGenerateRequest): Promise<AIResponse> {
-    const skillSets = {
-      technical: ['JavaScript', 'Python', 'React', 'Node.js', 'AWS', 'Docker', 'Git', 'SQL'],
-      marketing: ['Google Analytics', 'SEO/SEM', 'Social Media Marketing', 'Content Strategy', 'A/B Testing', 'CRM', 'Email Marketing', 'Brand Management'],
-      finance: ['Financial Modeling', 'Risk Analysis', 'Excel/VBA', 'Bloomberg Terminal', 'Portfolio Management', 'Investment Analysis', 'Financial Reporting', 'Regulatory Compliance']
-    };
-
-    const randomSkillSet = Object.values(skillSets)[Math.floor(Math.random() * Object.values(skillSets).length)];
+    const { context } = request;
+    const existingSkills = context?.skills || [];
+    const experience = context?.experience || [];
+    
+    // Determine likely skill categories based on existing data
+    let suggestedSkills: string[] = [];
+    
+    // Analyze existing experience for skill suggestions
+    const jobTitles = experience.map(exp => exp.title?.toLowerCase() || '').join(' ');
+    const descriptions = experience.map(exp => exp.description?.toLowerCase() || '').join(' ');
+    const allText = (jobTitles + ' ' + descriptions).toLowerCase();
+    
+    if (allText.includes('software') || allText.includes('developer') || allText.includes('engineer')) {
+      suggestedSkills = ['JavaScript', 'Python', 'React', 'Node.js', 'Git', 'SQL', 'AWS', 'TypeScript'];
+    } else if (allText.includes('marketing') || allText.includes('digital')) {
+      suggestedSkills = ['Google Analytics', 'SEO/SEM', 'Social Media Marketing', 'Content Strategy', 'Email Marketing', 'A/B Testing', 'CRM', 'Adobe Creative Suite'];
+    } else if (allText.includes('finance') || allText.includes('analyst')) {
+      suggestedSkills = ['Excel/VBA', 'Financial Modeling', 'Risk Analysis', 'Bloomberg Terminal', 'SQL', 'Python', 'PowerBI', 'Financial Reporting'];
+    } else if (allText.includes('design') || allText.includes('ui') || allText.includes('ux')) {
+      suggestedSkills = ['Figma', 'Adobe Creative Suite', 'Sketch', 'Prototyping', 'User Research', 'Wireframing', 'CSS', 'HTML'];
+    } else if (allText.includes('data') || allText.includes('analytics')) {
+      suggestedSkills = ['Python', 'R', 'SQL', 'Excel', 'Tableau', 'Power BI', 'Machine Learning', 'Statistics'];
+    } else {
+      // Generic professional skills
+      suggestedSkills = ['Microsoft Office', 'Project Management', 'Communication', 'Leadership', 'Problem Solving', 'Teamwork', 'Time Management', 'Analytical Thinking'];
+    }
+    
+    // Filter out existing skills
+    const newSkills = suggestedSkills.filter(skill => 
+      !existingSkills.some(existing => 
+        existing.toLowerCase().includes(skill.toLowerCase()) || 
+        skill.toLowerCase().includes(existing.toLowerCase())
+      )
+    );
+    
+    const skillsToShow = newSkills.length > 0 ? newSkills.slice(0, 6) : suggestedSkills.slice(0, 6);
     
     return {
-      content: randomSkillSet.join(', '),
+      content: skillsToShow.join(', '),
       suggestions: [
-        "Include both technical and soft skills",
-        "Match skills to job requirements",
-        "Group related skills together",
-        "Use industry-standard terminology"
+        "Include both technical and soft skills relevant to your target role",
+        "Match skills to specific job requirements you're applying for",
+        "Group related skills together (e.g., 'Programming Languages: JavaScript, Python')",
+        "Use industry-standard terminology and certifications",
+        "Consider adding skill proficiency levels if relevant"
       ]
     };
   }
 
   private async optimizeContent(request: AIGenerateRequest): Promise<AIResponse> {
+    const { currentContent } = request;
+    
+    if (!currentContent) {
+      return {
+        content: '',
+        score: 0,
+        improvements: ["Add content to optimize"]
+      };
+    }
+    
+    let score = 70; // Base score
+    const improvements: string[] = [];
+    
+    // Analyze content for scoring
+    const hasNumbers = /\d+/.test(currentContent);
+    const hasPercentages = /%/.test(currentContent);
+    const hasActionVerbs = /\b(led|managed|developed|implemented|created|designed|optimized|increased|reduced|improved)\b/i.test(currentContent);
+    const wordCount = currentContent.split(/\s+/).length;
+    const hasMetrics = /\b(increase|decrease|improve|reduce|grow|save|generate)\w*\s+by\s+\d+/i.test(currentContent);
+    
+    // Scoring logic
+    if (hasNumbers) score += 5;
+    if (hasPercentages) score += 5;
+    if (hasActionVerbs) score += 10;
+    if (hasMetrics) score += 10;
+    if (wordCount > 20 && wordCount < 100) score += 5;
+    
+    // Generate specific improvements
+    if (!hasNumbers && !hasPercentages) {
+      improvements.push("Add specific metrics and quantified achievements");
+    }
+    if (!hasActionVerbs) {
+      improvements.push("Use stronger action verbs (Led, Developed, Implemented, Optimized)");
+    }
+    if (wordCount < 10) {
+      improvements.push("Expand with more detailed descriptions of your impact");
+    }
+    if (wordCount > 150) {
+      improvements.push("Consider condensing for better readability");
+    }
+    if (!hasMetrics) {
+      improvements.push("Include specific results (e.g., 'increased sales by 25%')");
+    }
+    
+    // Always include these general improvements
+    improvements.push("Ensure consistent tense throughout", "Include relevant keywords for your target role");
+    
     return {
-      content: request.currentContent || '',
-      score: Math.floor(Math.random() * 30) + 70, // Random score between 70-100
-      improvements: [
-        "Add more specific metrics and achievements",
-        "Include relevant keywords for your industry",
-        "Use stronger action verbs",
-        "Improve formatting for better readability",
-        "Ensure consistent tense throughout"
-      ]
+      content: currentContent,
+      score: Math.min(score, 100),
+      improvements: improvements.slice(0, 5) // Limit to 5 improvements
     };
   }
 
   private async performATSCheck(request: AIGenerateRequest): Promise<AIResponse> {
-    const score = Math.floor(Math.random() * 20) + 80; // Random score between 80-100
+    const { currentContent } = request;
     
-    const improvements = [
+    if (!currentContent) {
+      return {
+        content: 'ATS Compatibility Score: 0/100',
+        score: 0,
+        improvements: ["Add content to check ATS compatibility"]
+      };
+    }
+    
+    let score = 80; // Base ATS score
+    const improvements: string[] = [];
+    
+    // ATS-specific checks
+    const hasStandardHeadings = /\b(experience|education|skills|summary)\b/i.test(currentContent);
+    const hasComplexFormatting = /[^\w\s.,;:()\-]/.test(currentContent);
+    const hasKeywords = currentContent.split(/\s+/).length > 10;
+    const hasBulletPoints = /[•\-\*]/.test(currentContent);
+    
+    if (hasStandardHeadings) score += 5;
+    if (!hasComplexFormatting) score += 5;
+    if (hasKeywords) score += 5;
+    if (hasBulletPoints) score += 5;
+    
+    // Generate ATS-specific improvements
+    if (hasComplexFormatting) {
+      improvements.push("Remove special characters and complex formatting");
+    }
+    if (!hasKeywords) {
+      improvements.push("Include more relevant keywords from the job posting");
+    }
+    
+    // Standard ATS improvements
+    improvements.push(
       "Use standard section headings (Experience, Education, Skills)",
-      "Avoid complex formatting and graphics",
-      "Include relevant keywords from job posting",
-      "Use simple bullet points",
-      "Ensure proper file format (PDF or DOCX)"
-    ];
+      "Avoid tables, text boxes, and graphics",
+      "Use simple bullet points for lists",
+      "Save in ATS-friendly format (PDF or DOCX)",
+      "Include relevant keywords naturally in context"
+    );
 
     return {
-      content: `ATS Compatibility Score: ${score}/100`,
-      score,
-      improvements: score < 90 ? improvements : ["Your resume is ATS-optimized!"]
+      content: `ATS Compatibility Score: ${Math.min(score, 100)}/100`,
+      score: Math.min(score, 100),
+      improvements: score < 95 ? improvements.slice(0, 4) : ["Your content is ATS-optimized!"]
     };
   }
 
   async analyzeJobMatch(resumeData: any, jobDescription: string): Promise<AIResponse> {
-    // Simulate job match analysis
-    const matchScore = Math.floor(Math.random() * 30) + 60; // Random score between 60-90
+    // Enhanced job match analysis based on actual resume data
+    const { experience, skills, summary } = resumeData;
+    
+    let matchScore = 60; // Base score
+    
+    // Analyze skills overlap
+    if (skills && skills.length > 0) {
+      const skillsText = skills.join(' ').toLowerCase();
+      const jobText = jobDescription.toLowerCase();
+      
+      // Simple keyword matching (in real implementation, use more sophisticated NLP)
+      const commonWords = skillsText.split(' ').filter(word => 
+        word.length > 3 && jobText.includes(word)
+      );
+      
+      matchScore += Math.min(commonWords.length * 3, 25);
+    }
+    
+    // Analyze experience relevance
+    if (experience && experience.length > 0) {
+      matchScore += Math.min(experience.length * 2, 10);
+    }
     
     return {
-      content: `Job Match Score: ${matchScore}/100`,
-      score: matchScore,
+      content: `Job Match Score: ${Math.min(matchScore, 100)}/100`,
+      score: Math.min(matchScore, 100),
       suggestions: [
-        "Add more relevant keywords from the job posting",
-        "Highlight specific skills mentioned in the requirements",
-        "Quantify achievements related to the role",
-        "Adjust summary to match the position"
+        "Add relevant keywords from the job posting to your summary",
+        "Highlight specific skills mentioned in the job requirements",
+        "Quantify achievements that relate to the role's responsibilities",
+        "Tailor your professional summary to match the position",
+        "Include industry-specific terminology used in the job description"
       ]
     };
   }
