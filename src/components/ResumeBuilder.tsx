@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { PersonalInfoForm } from './forms/PersonalInfoForm';
 import { SummaryForm } from './forms/SummaryForm';
@@ -45,6 +44,7 @@ export const ResumeBuilder: React.FC<ResumeBuilderProps> = ({
           <SummaryForm
             data={resumeData.summary}
             onUpdate={(data) => onDataUpdate('summary', data)}
+            resumeData={resumeData}
           />
         );
       case 'experience':

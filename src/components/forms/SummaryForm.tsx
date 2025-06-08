@@ -5,9 +5,10 @@ import { AIEnhancedForm } from './AIEnhancedForm';
 interface SummaryFormProps {
   data: string;
   onUpdate: (data: string) => void;
+  resumeData?: any; // Add resume data as context
 }
 
-export const SummaryForm: React.FC<SummaryFormProps> = ({ data, onUpdate }) => {
+export const SummaryForm: React.FC<SummaryFormProps> = ({ data, onUpdate, resumeData }) => {
   return (
     <div className="space-y-6">
       <AIEnhancedForm
@@ -16,6 +17,12 @@ export const SummaryForm: React.FC<SummaryFormProps> = ({ data, onUpdate }) => {
         type="summary"
         placeholder="Write a compelling professional summary that highlights your key achievements and expertise. Focus on your unique value proposition and what sets you apart from other candidates..."
         label="Professional Summary"
+        context={{
+          personalInfo: resumeData?.personalInfo,
+          experience: resumeData?.experience,
+          skills: resumeData?.skills,
+          education: resumeData?.education
+        }}
       />
       
       <div className="bg-blue-500/10 border border-blue-400/20 p-4 rounded-lg">

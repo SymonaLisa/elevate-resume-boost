@@ -1,4 +1,3 @@
-
 import { useToast } from '@/hooks/use-toast';
 
 export interface AIGenerateRequest {
@@ -45,7 +44,23 @@ class AIService {
   }
 
   private async generateSummary(request: AIGenerateRequest): Promise<AIResponse> {
-    const { context } = request;
+    const { context, currentContent } = request;
+    
+    // If user has started typing, enhance their existing content
+    if (currentContent && currentContent.trim().length > 0) {
+      const enhancedSummary = this.enhanceExistingSummary(currentContent, context);
+      return {
+        content: enhancedSummary,
+        suggestions: [
+          "Your summary has been enhanced with relevant details from your experience",
+          "Consider adding specific metrics from your work history",
+          "Highlight skills that match your target role",
+          "Ensure the tone matches your industry standards"
+        ]
+      };
+    }
+    
+    // Original logic for generating from scratch
     const hasExperience = context?.experience && context.experience.length > 0;
     const hasSkills = context?.skills && context.skills.length > 0;
     const name = context?.personalInfo?.fullName || 'Professional';
@@ -76,6 +91,40 @@ class AIService {
         "Add industry-specific keywords relevant to your target role"
       ]
     };
+  }
+
+  private enhanceExistingSummary(currentContent: string, context?: any): string {
+    const hasExperience = context?.experience && context.experience.length > 0;
+    const hasSkills = context?.skills && context.skills.length > 0;
+    
+    let enhanced = currentContent;
+    
+    // Add experience details if mentioned but not specific
+    if (hasExperience && !enhanced.includes('years') && context.experience.length > 1) {
+      enhanced = enhanced.replace(/professional/i, `professional with ${context.experience.length}+ years of experience`);
+    }
+    
+    // Add company name if not mentioned
+    if (hasExperience && context.experience[0]?.company && !enhanced.toLowerCase().includes(context.experience[0].company.toLowerCase())) {
+      const recentJob = context.experience[0];
+      if (enhanced.includes('.')) {
+        enhanced = enhanced.replace('.', ` at ${recentJob.company}.`);
+      }
+    }
+    
+    // Add skills if not mentioned
+    if (hasSkills && context.skills.length > 0) {
+      const mentionedSkills = context.skills.filter(skill => 
+        enhanced.toLowerCase().includes(skill.toLowerCase())
+      );
+      
+      if (mentionedSkills.length === 0) {
+        const topSkills = context.skills.slice(0, 3).join(', ');
+        enhanced += ` Skilled in ${topSkills} with a focus on delivering high-quality solutions.`;
+      }
+    }
+    
+    return enhanced;
   }
 
   private async enhanceExperience(request: AIGenerateRequest): Promise<AIResponse> {

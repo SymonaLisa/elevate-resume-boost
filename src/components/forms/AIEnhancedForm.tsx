@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
@@ -14,6 +13,13 @@ interface AIEnhancedFormProps {
   type: 'summary' | 'experience' | 'skills';
   placeholder: string;
   label: string;
+  context?: {
+    personalInfo?: any;
+    experience?: any[];
+    skills?: string[];
+    education?: any[];
+    targetRole?: string;
+  };
 }
 
 export const AIEnhancedForm: React.FC<AIEnhancedFormProps> = ({
@@ -21,7 +27,8 @@ export const AIEnhancedForm: React.FC<AIEnhancedFormProps> = ({
   onContentUpdate,
   type,
   placeholder,
-  label
+  label,
+  context
 }) => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isOptimizing, setIsOptimizing] = useState(false);
@@ -33,7 +40,11 @@ export const AIEnhancedForm: React.FC<AIEnhancedFormProps> = ({
   const handleGenerate = async () => {
     setIsGenerating(true);
     try {
-      const response = await aiService.generateContent({ type });
+      const response = await aiService.generateContent({ 
+        type,
+        context,
+        currentContent: content // Pass current content for context-aware generation
+      });
       setAiResponse(response);
       setShowSuggestions(true);
       toast({
@@ -65,7 +76,8 @@ export const AIEnhancedForm: React.FC<AIEnhancedFormProps> = ({
     try {
       const response = await aiService.generateContent({ 
         type: 'optimize', 
-        currentContent: content 
+        currentContent: content,
+        context
       });
       setAiResponse(response);
       setShowSuggestions(true);
@@ -98,7 +110,8 @@ export const AIEnhancedForm: React.FC<AIEnhancedFormProps> = ({
     try {
       const response = await aiService.generateContent({ 
         type: 'ats-check', 
-        currentContent: content 
+        currentContent: content,
+        context
       });
       setAiResponse(response);
       setShowSuggestions(true);
