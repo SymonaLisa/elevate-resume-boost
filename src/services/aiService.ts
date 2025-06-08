@@ -46,21 +46,170 @@ class AIService {
   private async generateSummary(request: AIGenerateRequest): Promise<AIResponse> {
     const { context, currentContent } = request;
     
-    // If user has started typing, enhance their existing content
+    // If user has typed content, enhance and expand it
     if (currentContent && currentContent.trim().length > 0) {
-      const enhancedSummary = this.enhanceExistingSummary(currentContent, context);
+      const enhancedSummary = this.enhanceUserTypedContent(currentContent, context);
       return {
         content: enhancedSummary,
-        suggestions: [
-          "Your summary has been enhanced with relevant details from your experience",
-          "Consider adding specific metrics from your work history",
-          "Highlight skills that match your target role",
-          "Ensure the tone matches your industry standards"
-        ]
+        suggestions: this.getContentBasedSuggestions(currentContent, context)
       };
     }
     
-    // Original logic for generating from scratch
+    // If no content typed, generate from context
+    return this.generateFromContext(context);
+  }
+
+  private enhanceUserTypedContent(currentContent: string, context?: any): string {
+    const { experience, skills, personalInfo } = context || {};
+    let enhanced = currentContent.trim();
+    
+    // Analyze what user has written to determine enhancement strategy
+    const contentLower = enhanced.toLowerCase();
+    const words = enhanced.split(/\s+/);
+    const sentences = enhanced.split(/[.!?]+/).filter(s => s.trim().length > 0);
+    
+    // If content is very short (1-3 words), expand it significantly
+    if (words.length <= 3) {
+      enhanced = this.expandShortContent(enhanced, context);
+    }
+    // If content is a single sentence, add complementary sentences
+    else if (sentences.length === 1) {
+      enhanced = this.expandSingleSentence(enhanced, context);
+    }
+    // If content has multiple sentences, enhance each aspect
+    else {
+      enhanced = this.enhanceMultipleSentences(enhanced, context);
+    }
+    
+    return enhanced;
+  }
+
+  private expandShortContent(content: string, context?: any): string {
+    const { experience, skills, personalInfo } = context || {};
+    const contentLower = content.toLowerCase();
+    
+    // Check what the user started with and build around it
+    if (contentLower.includes('developer') || contentLower.includes('engineer')) {
+      const yearsExp = experience?.length > 1 ? `${experience.length}+ years` : 'proven experience';
+      const topSkills = skills?.slice(0, 3).join(', ') || 'modern technologies';
+      const company = experience?.[0]?.company || 'leading organizations';
+      
+      return `${content} with ${yearsExp} in software development. Currently contributing to innovative projects at ${company}, specializing in ${topSkills}. Proven track record of delivering scalable solutions and collaborating effectively with cross-functional teams to drive technical excellence.`;
+    }
+    
+    if (contentLower.includes('manager') || contentLower.includes('lead')) {
+      const teamSize = experience?.length > 2 ? 'multiple teams' : 'development teams';
+      const industry = experience?.[0]?.company || 'technology sector';
+      
+      return `${content} with extensive experience leading ${teamSize} and driving strategic initiatives. Demonstrated success in ${industry}, combining technical expertise with strong leadership skills to deliver exceptional results and foster team growth.`;
+    }
+    
+    if (contentLower.includes('designer') || contentLower.includes('creative')) {
+      const designTools = skills?.filter(s => s.toLowerCase().includes('design') || s.toLowerCase().includes('figma') || s.toLowerCase().includes('adobe'))?.slice(0, 2).join(' and ') || 'industry-standard design tools';
+      
+      return `${content} passionate about creating intuitive and visually compelling user experiences. Proficient in ${designTools} with a strong foundation in user-centered design principles. Experienced in collaborating with development teams to bring creative visions to life.`;
+    }
+    
+    // Generic enhancement for other content
+    const skills_text = skills?.slice(0, 3).join(', ') || 'various technologies';
+    const exp_context = experience?.length > 0 ? `with experience at ${experience[0].company || 'leading organizations'}` : 'with a strong professional background';
+    
+    return `${content} ${exp_context}. Skilled in ${skills_text} and committed to delivering high-quality results. Passionate about continuous learning and contributing to team success through collaboration and innovation.`;
+  }
+
+  private expandSingleSentence(content: string, context?: any): string {
+    const { experience, skills } = context || {};
+    let enhanced = content;
+    
+    // Add specific experience details
+    if (experience?.length > 0) {
+      const recentRole = experience[0];
+      if (recentRole.company && !content.toLowerCase().includes(recentRole.company.toLowerCase())) {
+        enhanced += ` Currently contributing to innovative projects at ${recentRole.company}.`;
+      }
+      
+      if (recentRole.description && experience.length > 1) {
+        enhanced += ` With ${experience.length}+ years of progressive experience, I have consistently delivered impactful solutions.`;
+      }
+    }
+    
+    // Add skills context if relevant
+    if (skills?.length > 0 && !this.hasSkillsMentioned(content, skills)) {
+      const relevantSkills = skills.slice(0, 3).join(', ');
+      enhanced += ` Expertise includes ${relevantSkills} with a focus on best practices and continuous improvement.`;
+    }
+    
+    return enhanced;
+  }
+
+  private enhanceMultipleSentences(content: string, context?: any): string {
+    const { experience, skills } = context || {};
+    let enhanced = content;
+    
+    // Check if quantified achievements are missing
+    if (!/\d+(%|years|projects|teams)/.test(content) && experience?.length > 1) {
+      enhanced += ` With ${experience.length}+ years of proven experience, I have successfully delivered numerous high-impact projects.`;
+    }
+    
+    // Check if specific skills are missing
+    if (skills?.length > 0 && !this.hasSkillsMentioned(content, skills)) {
+      const unmentiondSkills = skills.filter(skill => 
+        !content.toLowerCase().includes(skill.toLowerCase())
+      ).slice(0, 2);
+      
+      if (unmentiondSkills.length > 0) {
+        enhanced += ` Technical proficiencies include ${unmentiondSkills.join(' and ')}.`;
+      }
+    }
+    
+    // Add value proposition if missing
+    if (!content.toLowerCase().includes('value') && !content.toLowerCase().includes('impact') && !content.toLowerCase().includes('results')) {
+      enhanced += ` Committed to driving measurable business value through innovative solutions and collaborative leadership.`;
+    }
+    
+    return enhanced;
+  }
+
+  private hasSkillsMentioned(content: string, skills: string[]): boolean {
+    const contentLower = content.toLowerCase();
+    return skills.some(skill => contentLower.includes(skill.toLowerCase()));
+  }
+
+  private getContentBasedSuggestions(content: string, context?: any): string[] {
+    const suggestions: string[] = [];
+    const contentLower = content.toLowerCase();
+    const { experience, skills } = context || {};
+    
+    // Analyze what's missing and provide specific suggestions
+    if (!/\d+/.test(content)) {
+      suggestions.push("Consider adding specific numbers (years of experience, team size, project count)");
+    }
+    
+    if (!/%/.test(content)) {
+      suggestions.push("Include quantified achievements (e.g., 'increased efficiency by 25%')");
+    }
+    
+    if (!/\b(led|managed|developed|created|implemented|optimized|delivered)\b/i.test(content)) {
+      suggestions.push("Start sentences with strong action verbs (Led, Developed, Implemented)");
+    }
+    
+    if (skills?.length > 0 && !this.hasSkillsMentioned(content, skills)) {
+      suggestions.push(`Mention relevant skills from your profile: ${skills.slice(0, 3).join(', ')}`);
+    }
+    
+    if (experience?.length > 0 && !contentLower.includes(experience[0]?.company?.toLowerCase() || '')) {
+      suggestions.push("Consider mentioning your current/recent company to add credibility");
+    }
+    
+    if (!contentLower.includes('passion') && !contentLower.includes('committed') && !contentLower.includes('dedicated')) {
+      suggestions.push("Add personality by mentioning your passion or commitment to the field");
+    }
+    
+    return suggestions.slice(0, 4); // Limit to most relevant suggestions
+  }
+
+  private generateFromContext(context?: any): { content: string; suggestions: string[] } {
+    // ... keep existing code (original generateFromContext logic)
     const hasExperience = context?.experience && context.experience.length > 0;
     const hasSkills = context?.skills && context.skills.length > 0;
     const name = context?.personalInfo?.fullName || 'Professional';
@@ -91,40 +240,6 @@ class AIService {
         "Add industry-specific keywords relevant to your target role"
       ]
     };
-  }
-
-  private enhanceExistingSummary(currentContent: string, context?: any): string {
-    const hasExperience = context?.experience && context.experience.length > 0;
-    const hasSkills = context?.skills && context.skills.length > 0;
-    
-    let enhanced = currentContent;
-    
-    // Add experience details if mentioned but not specific
-    if (hasExperience && !enhanced.includes('years') && context.experience.length > 1) {
-      enhanced = enhanced.replace(/professional/i, `professional with ${context.experience.length}+ years of experience`);
-    }
-    
-    // Add company name if not mentioned
-    if (hasExperience && context.experience[0]?.company && !enhanced.toLowerCase().includes(context.experience[0].company.toLowerCase())) {
-      const recentJob = context.experience[0];
-      if (enhanced.includes('.')) {
-        enhanced = enhanced.replace('.', ` at ${recentJob.company}.`);
-      }
-    }
-    
-    // Add skills if not mentioned
-    if (hasSkills && context.skills.length > 0) {
-      const mentionedSkills = context.skills.filter(skill => 
-        enhanced.toLowerCase().includes(skill.toLowerCase())
-      );
-      
-      if (mentionedSkills.length === 0) {
-        const topSkills = context.skills.slice(0, 3).join(', ');
-        enhanced += ` Skilled in ${topSkills} with a focus on delivering high-quality solutions.`;
-      }
-    }
-    
-    return enhanced;
   }
 
   private async enhanceExperience(request: AIGenerateRequest): Promise<AIResponse> {
